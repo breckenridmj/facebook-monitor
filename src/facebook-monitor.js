@@ -1,25 +1,34 @@
 require('dotenv').config();
 const puppeteer = require('puppeteer');
-import { scheduleJob } from 'node-schedule';
+const { scheduleJob } = require('node-schedule');
 
+// Define the hours variable with a value
+const hours = 1; // Example: run every hour
+
+// Process user and pass from env
+const user = process.env.USER_NAME;
+const pass = process.env.PASSWORD;
+
+// Facebook Login url
 const facebook_url = "https://www.facebook.com/";
+
+console.log("Logging in as user: ",user);
+console.log("Password used to log in: ", pass);
 
 async function loadPage(){
     // Launches browser and disables notification pop up in chrome
     let browser = await puppeteer.launch({
         headless:false,
-        args: ['--no-startup-window'],
+        //args: ['--no-startup-window'],
     });
     const context = browser.defaultBrowserContext();
     context.overridePermissions(facebook_url, ["geolocation", "notifications"]);
     const page = await browser.newPage();
     await page.goto(facebook_url, {
         waitUntil: 'networkidle0',
-        timeout: 0,
+        timeout: 6000,
     });
     await page.setViewport({width: 1200, height: 720});
-
-    
 
     return page;
 }
@@ -27,8 +36,8 @@ async function loadPage(){
 async function signIn(page){
 
     // Enter login information
-    await page.type('#email', Username);
-    await page.type('#pass', Password);
+    await page.type('#email', user);
+    await page.type('#pass', pass);
 
     // Try to click login button
     try {
@@ -44,27 +53,11 @@ async function signIn(page){
     });
 }
 
-async function closeNotificationPopUp(page){
-    try {
-        // Intercept and dismiss notification prompts
-        page.on('dialog', async (dialog) => {
-            if (dialog.type() === 'alert' && dialog.message().includes('notification')) {
-                console.log('Notification dialog detected:', dialog.message());
-                await dialog.dismiss();
-        }
-    });
-
-    } catch (error) {
-        console.error("Error closing pop up notification: ", error);
-    }
-}
-
 async function run () {
     var page = await loadPage();
     await signIn(page);
-    await closeNotificationPopUp(page);
 
 }
 
 run();
-scheduleJob('scrape aliexpress', `0 */${hours} * * *`, run);
+scheduleJob('scrape facebook', `0 */${hours} * * *`, run);
