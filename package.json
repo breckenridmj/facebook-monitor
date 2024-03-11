@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "gitignore": "^0.7.0",
+    "node-schedule": "^2.1.1",
+    "puppeteer": "^22.4.1"
+  },
+  "name": "facebook-monitor",
+  "version": "1.0.0",
+  "main": "facebook-monitor.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
