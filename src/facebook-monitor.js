@@ -12,8 +12,12 @@ const pass = process.env.PASSWORD;
 // Facebook Login url
 const facebook_url = "https://www.facebook.com/";
 
-console.log("Logging in as user: ",user);
-console.log("Password used to log in: ", pass);
+// Search Input
+const searchQuery = 'John Brown';
+
+//console.log("Logging in as user: ",user);
+//console.log("Password used to log in: ", pass);
+//console.log("Search Query: ", searchQuery);
 
 async function loadPage(){
     // Launches browser and disables notification pop up in chrome
@@ -35,6 +39,10 @@ async function loadPage(){
 
 async function signIn(page){
 
+    // Log
+    console.log("Logging in as user: ",user);
+    console.log("Password used to log in: ", pass);
+
     // Enter login information
     await page.type('#email', user);
     await page.type('#pass', pass);
@@ -53,9 +61,32 @@ async function signIn(page){
     });
 }
 
+async function searchInput(page){
+
+    // Wait for the search input field to appear
+    await page.waitForSelector('[placeholder="Search Facebook"]');
+
+    // Type into the search input field
+    await page.type('[placeholder="Search Facebook"]', searchQuery);
+
+    // Press the Enter key after typing
+    await page.keyboard.press('Enter');
+
+    // Wait for navigation after pressing Enter
+    await page.waitForNavigation();
+
+    // Now the page has navigated, you can continue with further actions
+    await page.screenshot({ path: './screenshots/SearchResults.png' });
+}
+
+async function searchElement(page){
+    
+}
+
 async function run () {
     var page = await loadPage();
     await signIn(page);
+    await searchInput(page);
 
 }
 
