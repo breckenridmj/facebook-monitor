@@ -8,12 +8,13 @@ const hours = 1; // Example: run every hour
 // Process user and pass from env
 const user = process.env.USER_NAME;
 const pass = process.env.PASSWORD;
+const searchName = process.SEARCH_INPUT;
 
 // Facebook Login url
 const facebook_url = "https://www.facebook.com/login";
 
 // Search Input
-const searchQuery = 'John Brown';
+const searchQuery = searchName;
 
 //console.log("Logging in as user: ",user);
 //console.log("Password used to log in: ", pass);
@@ -23,6 +24,8 @@ async function loadPage(){
     // Launches browser and disables notification pop up in chrome
     let browser = await puppeteer.launch({
         headless:false,
+        defaultViewport: null, // Set viewpot to null
+        timeout: 0, // Set to 0  for no timeout (not reccomended for production change later)
         //args: ['--no-startup-window'],
     });
     const context = browser.defaultBrowserContext();
@@ -114,48 +117,69 @@ async function clickPeople(page){
     // Wait for navigation after Clicking People
     await page.waitForNavigation();
 
-    // Wait until page is idle
-    //await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }); // Wait for up to 30 seconds
-    // Add a delay of 2 seconds
-    //await page.waitForTimeout(10000);
-
     // Capture Screenshot of finished process
     await page.screenshot({ //capture screenshot
         path: './screenshots/PeopleResults.png'
     });
 }
 
-// async function clickSeeAll(page){
-//     try {
-//         // Click the see all button
-//         await page.waitForSelector("button[class='.x9f619 .x1n2onr6 .x1ja2u2z .x78zum5 .xdt5ytf .x1iyjqo2 .x2lwn1j']");
-//         await page.click("button[class='.x9f619 .x1n2onr6 .x1ja2u2z .x78zum5 .xdt5ytf .x1iyjqo2 .x2lwn1j']");
-        
-//         console.log("Clicked: See All Button");
+    
+async function scrollPageToBottom(page) {
+    console.log("Scrolling to the bottom of the page");
 
-//     } catch (error) {
-//         console.log("Failed to click SEE ALL button");
-//     }
-// }
+    try {
+        // Scroll loop
+        while (true) {
+            // Scroll to the bottom of the page
+            await page.evaluate(async () => {
+                await new Promise((resolve, reject) => {
+                    let totalHeight = 0;
+                    const distance = 20;  // Increase the distance scrolled per interval
+                    const scrollInterval = setInterval(() => {
+                        const scrollHeight = document.body.scrollHeight;
+                        window.scrollBy(0, distance);
+                        totalHeight += distance;
+                        if (totalHeight >= scrollHeight) {
+                            clearInterval(scrollInterval);
+                            resolve();
+                        }
+                    }, 200); // Adjust the interval as needed
+                });
+            });
 
+            console.log("Scrolled to the bottom");
+
+            // Collect search feed content after each scroll
+            const searchFeedContent = await page.$$eval('div[role="feed"]', feed => feed.map(feed => feed.textContent));
+
+            // Output search feed content line by line
+            console.log('Search Feed Content:');
+            for (const item of searchFeedContent) {
+                console.log(item);
+            }
+
+            // Check if the last scroll reached the bottom
+            const isEndOfPage = await page.evaluate(() => {
+                return window.innerHeight + window.scrollY >= document.body.offsetHeight;
+            });
+
+            // If reached the bottom, break the loop
+            if (isEndOfPage) {
+                console.log("Reached the bottom of the page");
+                break;
+            }
+        }
+    } catch (error) {
+        console.log("Failed to scroll to the bottom of the page", error);
+    }
+}
+    
 // Grab Account Info
 async function collectAccountData(page){
 
-    try {
-
-        // Log the search feed content
-        const searchFeedContent = await page.$$eval('div.x1qjc9v5.x1q0q8m5.x1qhh985.xu3j5b3.xcfux6l.x26u7qi.xm0m39n.x13fuv20.x972fbf.x9f619.x78zum5.x1r8uery.xdt5ytf.x1iyjqo2.xs83m0k.x1qughib.xat24cr.x11i5rnm.x1mh8g0r.xdj266r.x2lwn1j.xeuugli.x4uap5.xkhd6sd.xz9dl7a.xsag5q8.x1n2onr6.x1ja2u2z', feed => feed.map(feed => feed.textContent));
-        console.log('Search Feed Content:', searchFeedContent);
-
-    } catch (error){
-
-        console.log("Failed to get Search Contents: ", error);
-
-    }
-
     // Wait for search feed
     //await page.waitForNavigation("div[class='.x9f619 .x1n2onr6 .x1ja2u2z .x78zum5 .xdt5ytf .x1iyjqo2 .x2lwn1j']");
-    await page.waitForSelector('a[class=".xu06os2.x1ok221b"]');
+    await page.waitForSelector('div[role="feed"]');
 
     // Grab all items and map them to accounts then return the objects
     try {
@@ -165,7 +189,7 @@ async function collectAccountData(page){
             // > div:first-child : grab the first child of that div
             //
             //const accounts = Array.from(document.querySelectorAll("div[class='x9f619 x1n2onr6 x1ja2u2z x78zum5 xdt5ytf x1iyjqo2 x2lwn1j'] > div > div > div > div > div> div > div > div:first-child > div")).map( 
-            const accounts = Array.from(document.querySelectorAll('a[class=".xu06os2.x1ok221b"]')).map(
+            const accounts = Array.from(document.querySelectorAll('div[role="feed"] > div > div > div > div > div > div > div')).map(
                 accounts => {
                     return {
                         // return the name (paragraph) ? if not available return nothing
@@ -227,7 +251,11 @@ async function run () {
     await signIn(page);
     await searchInput(page);
     await clickPeople(page);
-    //await clickSeeAll(page);
+    await scrollPageToBottom(page);
+
+    // Add a delay of 3 seconds (3000 milliseconds)
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
     await collectAccountData(page);
 
 }
