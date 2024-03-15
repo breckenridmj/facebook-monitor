@@ -76,6 +76,8 @@ async function searchInput(page){
         // Press the Enter key after typing
         await page.keyboard.press('Enter');
 
+        console.log("Input search query");
+
     } catch (error) {
         console.log("Search Failed For: " + searchQuery, error);
     }
@@ -101,6 +103,7 @@ async function clickPeople(page){
         if (listItems.length >= 10) {
             // Click on the third list item
             await listItems[2].click();
+            console.log("Clicked: People Button");
         } else {
             console.log('There are less than ten list items.');
         }
@@ -122,20 +125,37 @@ async function clickPeople(page){
     });
 }
 
+// async function clickSeeAll(page){
+//     try {
+//         // Click the see all button
+//         await page.waitForSelector("button[class='.x9f619 .x1n2onr6 .x1ja2u2z .x78zum5 .xdt5ytf .x1iyjqo2 .x2lwn1j']");
+//         await page.click("button[class='.x9f619 .x1n2onr6 .x1ja2u2z .x78zum5 .xdt5ytf .x1iyjqo2 .x2lwn1j']");
+        
+//         console.log("Clicked: See All Button");
+
+//     } catch (error) {
+//         console.log("Failed to click SEE ALL button");
+//     }
+// }
+
 // Grab Account Info
 async function collectAccountData(page){
 
-    // Click the see all button
-    await page.waitForSelector("button[class='.x9f619 .x1n2onr6 .x1ja2u2z .x78zum5 .xdt5ytf .x1iyjqo2 .x2lwn1j']");
-    await page.click("button[class='.x9f619 .x1n2onr6 .x1ja2u2z .x78zum5 .xdt5ytf .x1iyjqo2 .x2lwn1j']");
+    try {
 
-    // Log the search feed content
-    const searchFeedContent = await page.$eval('.x9f619 .x1n2onr6 .x1ja2u2z .x78zum5 .xdt5ytf .x1iyjqo2 .x2lwn1j', feed => feed.textContent);
-    console.log('Search Feed Content:', searchFeedContent);
+        // Log the search feed content
+        const searchFeedContent = await page.$$eval('div.x1qjc9v5.x1q0q8m5.x1qhh985.xu3j5b3.xcfux6l.x26u7qi.xm0m39n.x13fuv20.x972fbf.x9f619.x78zum5.x1r8uery.xdt5ytf.x1iyjqo2.xs83m0k.x1qughib.xat24cr.x11i5rnm.x1mh8g0r.xdj266r.x2lwn1j.xeuugli.x4uap5.xkhd6sd.xz9dl7a.xsag5q8.x1n2onr6.x1ja2u2z', feed => feed.map(feed => feed.textContent));
+        console.log('Search Feed Content:', searchFeedContent);
+
+    } catch (error){
+
+        console.log("Failed to get Search Contents: ", error);
+
+    }
 
     // Wait for search feed
     //await page.waitForNavigation("div[class='.x9f619 .x1n2onr6 .x1ja2u2z .x78zum5 .xdt5ytf .x1iyjqo2 .x2lwn1j']");
-    await page.waitForSelector('div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x1iyjqo2.x2lwn1j');
+    await page.waitForSelector('a[class=".xu06os2.x1ok221b"]');
 
     // Grab all items and map them to accounts then return the objects
     try {
@@ -145,7 +165,7 @@ async function collectAccountData(page){
             // > div:first-child : grab the first child of that div
             //
             //const accounts = Array.from(document.querySelectorAll("div[class='x9f619 x1n2onr6 x1ja2u2z x78zum5 xdt5ytf x1iyjqo2 x2lwn1j'] > div > div > div > div > div> div > div > div:first-child > div")).map( 
-            const accounts = Array.from(document.querySelectorAll('div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x1iyjqo2.x2lwn1j > div > div > div > div > div > div > div > div:first-child > div')).map(
+            const accounts = Array.from(document.querySelectorAll('a[class=".xu06os2.x1ok221b"]')).map(
                 accounts => {
                     return {
                         // return the name (paragraph) ? if not available return nothing
@@ -207,6 +227,7 @@ async function run () {
     await signIn(page);
     await searchInput(page);
     await clickPeople(page);
+    //await clickSeeAll(page);
     await collectAccountData(page);
 
 }
