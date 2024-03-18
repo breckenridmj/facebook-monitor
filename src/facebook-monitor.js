@@ -8,7 +8,7 @@ const hours = 1; // Example: run every hour
 // Process user and pass from env
 const user = process.env.USER_NAME;
 const pass = process.env.PASSWORD;
-const searchName = process.SEARCH_INPUT;
+const searchName = process.env.SEARCH_INPUT;
 
 // Facebook Login url
 const facebook_url = "https://www.facebook.com/login";
@@ -27,6 +27,7 @@ async function loadPage(){
         defaultViewport: null, // Set viewpot to null
         timeout: 0, // Set to 0  for no timeout (not reccomended for production change later)
         //args: ['--no-startup-window'],
+        //args: ['--disable-features=site-per-process'], //used for error frame detached
     });
     const context = browser.defaultBrowserContext();
     context.overridePermissions(facebook_url, ["geolocation", "notifications"]);
@@ -248,15 +249,33 @@ async function collectAccountData(page){
 
 async function run () {
     var page = await loadPage();
+
+    // Sign In Function
     await signIn(page);
-    await searchInput(page);
-    await clickPeople(page);
-    await scrollPageToBottom(page);
 
     // Add a delay of 3 seconds (3000 milliseconds)
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    await collectAccountData(page);
+    // Search Input Function
+    await searchInput(page);
+
+    // Add a delay of 3 seconds (3000 milliseconds)
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    // Click People Function
+    //await clickPeople(page);
+
+    // Add a delay of 3 seconds (3000 milliseconds)
+    //await new Promise(resolve => setTimeout(resolve, 5000));
+
+    // Scroll Function
+    //await scrollPageToBottom(page);
+
+    // Add a delay of 3 seconds (3000 milliseconds)
+    //await new Promise(resolve => setTimeout(resolve, 5000));
+
+    // Collect Account Data Function
+    //await collectAccountData(page);
 
 }
 
