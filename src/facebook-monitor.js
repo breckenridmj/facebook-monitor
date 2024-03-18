@@ -178,6 +178,16 @@ async function scrollPageToBottom(page) {
 // Grab Account Info
 async function collectAccountData(page){
 
+    // Collect search feed content after each scroll
+    const searchFeedContent = await page.$$eval('div[role="feed"]', feed => feed.map(feed => feed.textContent));
+
+    // Output search feed content line by line
+    console.log('Search Feed Content:');
+    for (const item of searchFeedContent) {
+        console.log(item);
+    }
+
+
     // Wait for search feed
     //await page.waitForNavigation("div[class='.x9f619 .x1n2onr6 .x1ja2u2z .x78zum5 .xdt5ytf .x1iyjqo2 .x2lwn1j']");
     await page.waitForSelector('div[role="feed"]');
@@ -247,6 +257,38 @@ async function collectAccountData(page){
 
 // }
 
+
+async function accounts(page){
+
+    
+    // Collect search feed content after each scroll
+    //const searchFeedContent = await page.$$eval('div[role="feed"] > div', feed => feed.map(feed => feed.textContent)); // Captures Users and bios
+    //const searchFeedContent = await page.$$eval('span.x193iq5w.xeuugli.x13faqbe.x1vvkbs.x1xmvt09.x1lliihq.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.xudqn12.x676frb.x1lkfr7t.x1lbecb7.xk50ysn.xzsf02u.x1yc453h', feed => feed.map(feed => feed.textContent)); // captures user name
+    //const searchFeedContent = await page.$$eval('div[class="x78zum5 xdt5ytf xz62fqu x16ldp7u"] > div[class="xu06os2 x1ok221b"] > span[dir="auto"]:nth-child(1)', feed => feed.map(feed => feed.textContent));
+  
+    const data = await page.$$eval('[role="feed"] > div.x1yztbdb', divs => {
+        return divs.map(div => {
+
+            // Navigate to the deeper element containing the aria-label attribute
+            const ariaLabelElement = div.querySelector('[aria-label]');
+            const spanTextElement = div.querySelector('span').textContent;
+            const hrefElement = div.querySelector('[href]').href;
+            
+            // If the aria-label element is found, return its aria-label attribute value
+            // Otherwise, return null
+            return {
+                Name: ariaLabelElement ? ariaLabelElement.getAttribute('aria-label') : null,
+                Bio: spanTextElement ? spanTextElement.textContent : null,
+                Link: hrefElement ? hrefElement.href : null,
+            };
+        });
+    });
+    
+    
+    console.log("Accounts Data Fetched:", data);
+    
+}
+
 async function run () {
     var page = await loadPage();
 
@@ -263,10 +305,12 @@ async function run () {
     await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Click People Function
-    //await clickPeople(page);
+    await clickPeople(page);
 
     // Add a delay of 3 seconds (3000 milliseconds)
-    //await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    await accounts(page);
 
     // Scroll Function
     //await scrollPageToBottom(page);
