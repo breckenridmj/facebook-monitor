@@ -268,24 +268,24 @@ async function accounts(page){
   
     const data = await page.$$eval('[role="feed"] > div.x1yztbdb', divs => {
         return divs.map(div => {
-
             // Navigate to the deeper element containing the aria-label attribute
             const ariaLabelElement = div.querySelector('[aria-label]');
-            const spanTextElement = div.querySelector('span').textContent;
-            const hrefElement = div.querySelector('[href]').href;
+            const spanTextElement = div.querySelector('span.x1lliihq.x6ikm8r.x10wlt62.x1n2onr6');
+            const spanText = spanTextElement ? spanTextElement.textContent : null;
+            const hrefElement = div.querySelector('[href]');
+            const href = hrefElement ? hrefElement.href : null;
             
             // If the aria-label element is found, return its aria-label attribute value
             // Otherwise, return null
             return {
                 Name: ariaLabelElement ? ariaLabelElement.getAttribute('aria-label') : null,
-                Bio: spanTextElement ? spanTextElement.textContent : null,
-                Link: hrefElement ? hrefElement.href : null,
+                Bio: spanText,
+                Link: href
             };
         });
     });
     
-    
-    console.log("Accounts Data Fetched:", data);
+    console.log(data);
     
 }
 
