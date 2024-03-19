@@ -219,74 +219,59 @@ async function collectAccountData(page){
 
 }
 
-// async function collectAccountData(page){
 
-//     try {
-//         // Wait for the list items to appear
-//         //await page.waitForSelector('a[role="link"]'); // Wait for 60 seconds
+async function collectAccountData(page){
 
-//         // Get all list items
-//         //const listItems = await page.$$('a[role="link"]');
-
-//         // Loop through each list item
-//        // for (const item of listItems) {
-
-//             // Extract Name from aria-label attribute
-//             //const name = await item.$eval('a[aria-label]', node => node.getAttribute('aria-label'));
-
-
-//             // Extract bio
-//             //const bio = await item.$eval('.x1lliihq', node => node.textContent.trim());
-
-//             // Extract profile picture URL
-//             //const profilePicURL = await item.$eval('image', node => node.getAttribute('xlink:href'));
-
-//             // Extract profile URL
-//             //const profileURL = await item.$eval('a', node => node.getAttribute('href'));
-
-//             // Log or process the collected data
-//             //console.log('Name:', name);
-//             //console.log("Bio:", bio);
-//             //console.log("Profile Picture URL:", profilePicURL);
-//             //console.log("Profile URL:", profileURL);
-//         }
-
-//     } catch (error) {
-//         console.log("Account Capture " + error);
-//     }
-
-// }
-
-
-async function accounts(page){
-
-    
     // Collect search feed content after each scroll
-    //const searchFeedContent = await page.$$eval('div[role="feed"] > div', feed => feed.map(feed => feed.textContent)); // Captures Users and bios
+    // const searchFeedContent = await page.$$eval('div[role="feed"]', feed => feed.map(feed => feed.textContent)); // Captures Users and Bios
     //const searchFeedContent = await page.$$eval('span.x193iq5w.xeuugli.x13faqbe.x1vvkbs.x1xmvt09.x1lliihq.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.xudqn12.x676frb.x1lkfr7t.x1lbecb7.xk50ysn.xzsf02u.x1yc453h', feed => feed.map(feed => feed.textContent)); // captures user name
     //const searchFeedContent = await page.$$eval('div[class="x78zum5 xdt5ytf xz62fqu x16ldp7u"] > div[class="xu06os2 x1ok221b"] > span[dir="auto"]:nth-child(1)', feed => feed.map(feed => feed.textContent));
-  
-    const data = await page.$$eval('[role="feed"] > div.x1yztbdb', divs => {
-        return divs.map(div => {
-            // Navigate to the deeper element containing the aria-label attribute
-            const ariaLabelElement = div.querySelector('[aria-label]');
-            const spanTextElement = div.querySelector('span.x1lliihq.x6ikm8r.x10wlt62.x1n2onr6');
-            const spanText = spanTextElement ? spanTextElement.textContent : null;
-            const hrefElement = div.querySelector('[href]');
-            const href = hrefElement ? hrefElement.href : null;
-            
-            // If the aria-label element is found, return its aria-label attribute value
-            // Otherwise, return null
-            return {
-                Name: ariaLabelElement ? ariaLabelElement.getAttribute('aria-label') : null,
-                Bio: spanText,
-                Link: href
-            };
+
+    // Output search feed content line by line
+    // console.log('Search Feed Content:');
+    // for (const item of searchFeedContent) {
+    //     console.log(item);
+    // }
+
+    // Process update
+    console.log("Attempting to fetch user profiles");
+
+    // Wait for search feed
+    await page.waitForSelector('div[role="feed"]');
+
+    // Grab all items and map them to accounts then return the objects
+    try {
+
+        const data = await page.$$eval('[role="feed"] > div.x1yztbdb', divs => {
+            return divs.map(div => {
+                // Navigate to the deeper element containing the aria-label attribute
+                const ariaLabelElement = div.querySelector('[aria-label]');
+                const spanTextElement = div.querySelector('span.x1lliihq.x6ikm8r.x10wlt62.x1n2onr6');
+                const spanText = spanTextElement ? spanTextElement.textContent : null;
+                const hrefElement = div.querySelector('[href]');
+                const href = hrefElement ? hrefElement.href : null;
+                const profileImageElement = div.querySelector('image');
+                const profileImageSrc = profileImageElement ? profileImageElement.getAttribute('xlink:href') : null;
+                
+                // If the aria-label element is found, return its aria-label attribute value
+                // Otherwise, return null
+                return {
+                    Name: ariaLabelElement ? ariaLabelElement.getAttribute('aria-label') : null,
+                    Bio: spanText,
+                    Link: href,
+                    Profile_Picture: profileImageSrc,
+                };
+            });
         });
-    });
-    
-    console.log(data);
-    
+        
+        // Return Data to the console log
+        console.log(data);
+
+    } catch (error) {
+
+        console.log("Failed to process account profiles", error);
+
+    } 
 }
 
 async function run () {
@@ -310,7 +295,8 @@ async function run () {
     // Add a delay of 3 seconds (3000 milliseconds)
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    await accounts(page);
+    // Collect Account Data Function
+    await collectAccountData(page);
 
     // Scroll Function
     //await scrollPageToBottom(page);
