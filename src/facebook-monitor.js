@@ -29,7 +29,7 @@ async function loadPage(){
         headless: false,
         defaultViewport: null, // Set viewpot to null
         // Set to 0  for no timeout (not reccomended for production change later) or 60000 is equal to 60 secs
-        timeout: 3600000  // Set the timeout to 1 hour (3600000 milliseconds)
+        timeout: 0,  // Set the timeout to 1 hour (3600000 milliseconds)
         //args: ['--no-startup-window'],
         //args: ['--disable-features=site-per-process'], //used for error frame detached
     });
@@ -128,6 +128,34 @@ async function clickPeople(page){
     });
 }
 
+async function pageDown(page){
+
+    try {
+
+        let previousHeight;
+        let currentHeight = 0;
+
+        // Scroll down repeatedly until the height no longer increases
+        while (previousHeight !== currentHeight) {
+            previousHeight = currentHeight;
+
+            // Scroll to the bottom of the page
+            await page.evaluate(() => {
+                window.scrollTo(0, document.body.scrollHeight);
+            });
+
+            // Wait for a short interval to allow dynamic content to load
+            await new Promise(resolve => setTimeout(resolve, 10000));
+
+            // Get the updated height of the page
+            currentHeight = await page.evaluate(() => document.body.scrollHeight);
+        }
+
+        console.log("Reached the end of the page");
+    } catch (error) {
+        console.log("Error while loading page:", error);
+    }
+}
     
 async function autoScroll(page) {
 
@@ -332,7 +360,11 @@ async function run () {
     //await fetchAccountData(page);
 
     // Auto Scroll Function
-    await autoScroll(page);
+    //await autoScroll(page);
+    await pageDown(page);
+
+    // Add a delay of 3 seconds (3000 milliseconds)
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Collect Account Data Function
     await collectAccountData(page);
