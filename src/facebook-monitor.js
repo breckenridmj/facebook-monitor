@@ -4,6 +4,10 @@ const { scheduleJob } = require('node-schedule');
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
+const readline = require('readline');
+
+
+// ________________________________________________Webscrabing Variables Start Here_____________________________________________________
 
 // Define the hours variable with a value
 const hours = 1; // Example: run every hour
@@ -11,18 +15,30 @@ const hours = 1; // Example: run every hour
 // Process user and pass from env
 const user = process.env.USER_NAME;
 const pass = process.env.PASSWORD;
-const searchName = process.env.SEARCH_INPUT;
+//const searchName = process.env.SEARCH_INPUT;
+const searchQueries = process.env.SEARCH_QUERIES.split(',');
 
 // Facebook Login url
 const facebook_url = "https://www.facebook.com/login";
 
-// Search Input
-const searchQuery = searchName;
+// Create a new Map
+const searchMap = new Map();
 
-//console.log("Logging in as user: ",user);
-//console.log("Password used to log in: ", pass);
-//console.log("Search Query: ", searchQuery);
+// Iterate over each and then add it to the hash map
+searchQueries.forEach((query, index) => {
+    searchMap.set(index + 1, query);
+});
 
+// Iterate over key-value pairs and return them to the console log
+searchMap.forEach((value, key) => {
+    console.log(`${key}: ${value}`);
+});
+console.log(`The total number of search entries: ${searchMap.size}`);
+
+
+// ________________________________________________Webscrabing Functions Start Here_____________________________________________________
+
+// Load Page function
 async function loadPage(){
     // Launches browser and disables notification pop up in chrome
     let browser = await puppeteer.launch({
@@ -73,7 +89,8 @@ async function signIn(page){
     });
 }
 
-async function searchInput(page){
+async function searchInput(page, searchQuery) {
+    
     try {
         // Wait for the search input field to appear
         await page.waitForSelector('[placeholder="Search Facebook"]');
@@ -84,7 +101,7 @@ async function searchInput(page){
         // Press the Enter key after typing
         await page.keyboard.press('Enter');
 
-        console.log("Input search query: ", searchQuery);
+        console.log("Input search query");
 
     } catch (error) {
         console.log("Search Failed For: " + searchQuery, error);
@@ -95,11 +112,11 @@ async function searchInput(page){
 
     // Capture Screenshot of finished process
     await page.screenshot({ //capture screenshot
-        path: './screenshots/SearchResults.png'
+        path: './screenshots/InputResultsFor_${searchQuery}.png'
     });
 }
 
-async function clickPeople(page){
+async function clickPeople(page, searchQuery){
     try {
         // Wait for the list items to appear
         await page.waitForSelector('[role="listitem"]');
@@ -124,11 +141,11 @@ async function clickPeople(page){
 
     // Capture Screenshot of finished process
     await page.screenshot({ //capture screenshot
-        path: './screenshots/PeopleResults.png'
+        path: `./screenshots/PeopleResultsFor_${searchQuery}.png`
     });
 }
 
-async function autoScroll(page){
+async function autoScroll(page, searchQuery){
 
     try {
 
@@ -155,10 +172,15 @@ async function autoScroll(page){
     } catch (error) {
         console.log("Error while loading page:", error);
     }
+
+    // Capture Screenshot of finished process
+    await page.screenshot({ //capture screenshot
+        path: `./screenshots/ScrollEndResultsFor_${searchQuery}.png`
+    });
 }
 
 // Collect Account data from Page
-async function collectAccountData(page){
+async function collectAccountData(page, searchQuery){
 
     // Collect search feed content after each scroll
     // const searchFeedContent = await page.$$eval('div[role="feed"]', feed => feed.map(feed => feed.textContent)); // Captures Users and Bios
@@ -231,7 +253,7 @@ async function collectAccountData(page){
 
         // Write CSV data to a file
         const outputDir = path.join(__dirname, '..', 'accountData');
-        const outputPath = path.join(outputDir, 'output.csv');
+        const outputPath = path.join(outputDir, `SearchResultsFor_${searchQuery}.csv`);
         fs.writeFileSync(outputPath, csvData);
 
         console.log(`CSV file saved at ${outputPath}`);
@@ -251,31 +273,37 @@ async function run () {
     await signIn(page);
 
     // Add a delay of 3 seconds (3000 milliseconds)
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, 9000));
 
-    // Search Input Function
-    await searchInput(page);
+    // Iterate over the searchMap values
+    for (const searchQuery of searchMap.values()) {
+        // Search Input Function
+        await searchInput(page, searchQuery);
 
-    // Add a delay of 3 seconds (3000 milliseconds)
-    await new Promise(resolve => setTimeout(resolve, 5000));
+        // Add a delay of 5 seconds (5000 milliseconds)
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
-    // Click People Function
-    await clickPeople(page);
+        // Click People Function
+        await clickPeople(page, searchQuery);
 
-    // Add a delay of 3 seconds (3000 milliseconds)
-    await new Promise(resolve => setTimeout(resolve, 5000));
+        // Add a delay of 5 seconds (5000 milliseconds)
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
-    // Auto Scroll Function
-    await autoScroll(page);
+        // Auto Scroll Function
+        await autoScroll(page, searchQuery);
 
-    // Add a delay of 3 seconds (3000 milliseconds)
-    await new Promise(resolve => setTimeout(resolve, 5000));
+        // Add a delay of 5 seconds (5000 milliseconds)
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
-    // Collect Account Data Function
-    await collectAccountData(page);
+        // Collect Account Data Function
+        await collectAccountData(page, searchQuery);
 
-    // Process Finished
-    console.log("Finished!");
+        // Process Finished for the current searchQuery
+        console.log(`Finished processing searchQuery: ${searchQuery}`);
+    }
+
+// After processing all searchQueries
+console.log("All searchQueries processed!");
 }
 
 run();
