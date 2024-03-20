@@ -84,7 +84,7 @@ async function searchInput(page){
         // Press the Enter key after typing
         await page.keyboard.press('Enter');
 
-        console.log("Input search query");
+        console.log("Input search query: ", searchQuery);
 
     } catch (error) {
         console.log("Search Failed For: " + searchQuery, error);
@@ -111,7 +111,7 @@ async function clickPeople(page){
         if (listItems.length >= 10) {
             // Click on the third list item
             await listItems[2].click();
-            console.log("Clicked: People Button");
+            console.log("Clicking on People Navigation tab");
         } else {
             console.log('There are less than ten list items.');
         }
@@ -128,7 +128,7 @@ async function clickPeople(page){
     });
 }
 
-async function pageDown(page){
+async function autoScroll(page){
 
     try {
 
@@ -156,73 +156,6 @@ async function pageDown(page){
         console.log("Error while loading page:", error);
     }
 }
-    
-async function autoScroll(page) {
-
-    console.log("Scrolling and collecting data from the page please wait");
-
-    try {
-        // Scroll loop
-        console.log("Scroll Started!");
-        while (true) {
-            // Scroll to the bottom of the page
-            await page.evaluate(async () => {
-                await new Promise((resolve, reject) => {
-                    let totalHeight = 0;
-                    // typical scroll distance for a human user varies but is often around 100 to 200 pixels per scroll
-                    const distance = 100;  // Increase the distance scrolled per interval
-                    const scrollInterval = setInterval(() => {
-                        const scrollHeight = document.body.scrollHeight;
-                        window.scrollBy(0, distance);
-                        totalHeight += distance;
-                        if (totalHeight >= scrollHeight) {
-                            clearInterval(scrollInterval);
-                            resolve();
-                        }
-                        // common interval might be between 200 to 500 milliseconds.
-                    }, 400); // Adjust the interval as needed
-                });
-            });
-
-            console.log("Still Scrolling........");
-
-            // // Collect search feed content after each scroll
-            // const searchFeedContent = await page.$$eval('div[role="feed"]', feed => feed.map(feed => feed.textContent));
-
-            // // Output search feed content line by line
-            // console.log('Search Feed Content:');
-            // for (const item of searchFeedContent) {
-            //     console.log(item);
-            // }
-
-            // Check if the last scroll reached the bottom
-            // const isEndOfPage = await page.evaluate(() => {
-            //     return window.innerHeight + window.scrollY >= document.body.offsetHeight;
-            // });
-
-            // // If reached the bottom, break the loop
-            // if (isEndOfPage) {
-            //     console.log("Reached the bottom of the page");
-            //     break;
-            // }
-
-            // Check if the text "End of results" is found on the page
-            const endOfResultsTextFound = await page.evaluate(() => {
-                const endOfResultsElement = document.querySelector('span[dir="auto"]:contains("End of results")');
-                return endOfResultsElement !== null;
-            });
-
-            // If "End of results" is found, break the loop
-            if (endOfResultsTextFound) {
-                console.log("Reached the end of results");
-                break;
-            }
-        }
-    } catch (error) {
-        console.log("Failed to scroll to the bottom of the page", error);
-    }
-}
-    
 
 // Collect Account data from Page
 async function collectAccountData(page){
@@ -273,8 +206,27 @@ async function collectAccountData(page){
         console.log(data);
 
         // Convert data to CSV format
+
+        console.log("Converting Data into CSV please wait")
         const csvData = data.map(account => {
-            return `${account.Name},${account.Bio},${account.Link},${account.Profile_Picture}`;
+
+            // Clean Link
+            // Remove "profile.php?id=", "?" and everything after it, and "&" and everything after it from the Link field
+            let cleanedLink = account.Link.replace("profile.php?id=", "");
+            const questionMarkIndex = cleanedLink.indexOf("?");
+            if (questionMarkIndex !== -1) {
+                cleanedLink = cleanedLink.substring(0, questionMarkIndex);
+            }
+            const ampersandIndex = cleanedLink.indexOf("&");
+            if (ampersandIndex !== -1) {
+                cleanedLink = cleanedLink.substring(0, ampersandIndex);
+            }
+
+            // Clean Bio
+            let cleanedBio = account.Bio.replace(",", "");
+
+            //return each data set
+            return `${account.Name},${cleanedBio},${cleanedLink},${account.Profile_Picture}`;
         }).join('\n');
 
         // Write CSV data to a file
@@ -291,50 +243,6 @@ async function collectAccountData(page){
     } 
 }
 
-// async function fetchAccountData(page){
-
-//     // Process update
-//     console.log("Attempting to fetch user profiles");
-
-//     // Wait for search feed
-//     await page.waitForSelector('div[role="feed"]');
-
-//     // Grab all items and map them to accounts then return the objects
-//     try {
-//         // Wait for the feed container to load
-//         await page.waitForSelector('div[role="feed"]');
-
-//         // Evaluate in the context of the page to collect account data
-//         await page.evaluate(() => {
-//             // Get all div elements within the feed container
-//             const divs = document.querySelectorAll('div[role="feed"] > div.x1yztbdb');
-
-//             // Iterate over each div element and extract account data
-//             divs.forEach(div => {
-//                 const ariaLabelElement = div.querySelector('[aria-label]');
-//                 const spanTextElement = div.querySelector('span.x1lliihq.x6ikm8r.x10wlt62.x1n2onr6');
-//                 const spanText = spanTextElement ? spanTextElement.textContent : null;
-//                 const hrefElement = div.querySelector('[href]');
-//                 const href = hrefElement ? hrefElement.href : null;
-//                 const profileImageElement = div.querySelector('image');
-//                 const profileImageSrc = profileImageElement ? profileImageElement.getAttribute('xlink:href') : null;
-
-//                 // If the aria-label element is found, log the account data
-//                 if (ariaLabelElement) {
-//                     console.log({
-//                         Name: ariaLabelElement.getAttribute('aria-label'),
-//                         Bio: spanText,
-//                         Link: href,
-//                         Profile_Picture: profileImageSrc,
-//                     });
-//                 }
-//             });
-//         });
-
-//     } catch (error) {
-//         console.log("Failed to collect account data", error);
-//     }
-// }
 
 async function run () {
     var page = await loadPage();
@@ -357,11 +265,8 @@ async function run () {
     // Add a delay of 3 seconds (3000 milliseconds)
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    //await fetchAccountData(page);
-
     // Auto Scroll Function
-    //await autoScroll(page);
-    await pageDown(page);
+    await autoScroll(page);
 
     // Add a delay of 3 seconds (3000 milliseconds)
     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -369,15 +274,8 @@ async function run () {
     // Collect Account Data Function
     await collectAccountData(page);
 
-    // Scroll Function
-    // await scrollPageToBottom(page);
-
-    // Add a delay of 3 seconds (3000 milliseconds)
-    //await new Promise(resolve => setTimeout(resolve, 5000));
-
-    // Collect Account Data Function
-    //await collectAccountData(page);
-
+    // Process Finished
+    console.log("Finished!");
 }
 
 run();
