@@ -147,6 +147,8 @@ async function clickPeople(page, searchQuery){
 
 async function autoScroll(page, searchQuery){
 
+    console.log("Auto Scroll Started Please Wait....");
+    
     try {
 
         let previousHeight;
@@ -273,7 +275,7 @@ async function run () {
     await signIn(page);
 
     // Add a delay of 3 seconds (3000 milliseconds)
-    await new Promise(resolve => setTimeout(resolve, 9000));
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     // Iterate over the searchMap values
     for (const searchQuery of searchMap.values()) {
@@ -281,19 +283,19 @@ async function run () {
         await searchInput(page, searchQuery);
 
         // Add a delay of 5 seconds (5000 milliseconds)
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, 10000));
 
         // Click People Function
         await clickPeople(page, searchQuery);
 
         // Add a delay of 5 seconds (5000 milliseconds)
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, 10000));
 
         // Auto Scroll Function
         await autoScroll(page, searchQuery);
 
         // Add a delay of 5 seconds (5000 milliseconds)
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, 10000));
 
         // Collect Account Data Function
         await collectAccountData(page, searchQuery);
