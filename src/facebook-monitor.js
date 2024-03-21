@@ -137,7 +137,7 @@ async function clickPeople(page, searchQuery){
     }
     
     // Wait for navigation after Clicking People
-    await page.waitForNavigation();
+    //await page.waitForNavigation();
 
     // Capture Screenshot of finished process
     await page.screenshot({ //capture screenshot
@@ -148,7 +148,7 @@ async function clickPeople(page, searchQuery){
 async function autoScroll(page, searchQuery){
 
     console.log("Auto Scroll Started Please Wait....");
-    
+
     try {
 
         let previousHeight;
@@ -164,7 +164,7 @@ async function autoScroll(page, searchQuery){
             });
 
             // Wait for a short interval to allow dynamic content to load
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise(resolve => setTimeout(resolve, 15000));
 
             // Get the updated height of the page
             currentHeight = await page.evaluate(() => document.body.scrollHeight);
